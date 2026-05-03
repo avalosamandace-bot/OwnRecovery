@@ -1,0 +1,45 @@
+{
+  "summary": "Iteration 3 — full-stack validation of the 4 new upgrades (Google Social Login UI, Clinician PDF Export, Admin/Backoffice Console, Trust+Privacy Dashboard) AND regression of existing email/password auth, cookie-only session, role routing, clinician verification, and logout cookie-clear. Added /app/backend/tests/test_own_recovery_upgrade_v3.py with 20 pytest cases covering all the surface endpoints + the Google endpoint shape. Backend: 20/20 passed. Frontend: all expected data-testids render and all auth-gated pages behave correctly. Demo state was re-seeded at the end so downstream testing starts clean.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_own_recovery_upgrade_v3.py",
+    "/app/test_reports/pytest/own_recovery_upgrade_v3.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "OK: POST /api/auth/google correctly rejects invalid session_id (401/502 path). Endpoint only mints a JWT on successful exchange with Emergent session-data API; shape is consistent with email/password login (same or_token cookie + token/user body).",
+    "OK: GET /api/clinician/patients/{id}/report.pdf returns real PDF (magic bytes %PDF-, >1KB body) with correct Content-Type application/pdf and Content-Disposition attachment. 403 enforced for non-clinician (alex). Verified-clinician gate honored (drquinn verified).",
+    "OK: PDF export writes an audit_log entry with action='export_patient_pdf' including target_user_id/target_email + anonymized meta — visible in /api/admin/audit-log, and surfaced to the patient via /api/consent/access-log.",
+    "OK: /api/admin/stats, /users, /invites CRUD (create→list→revoke), /audit-log all require is_admin=True (403 for alex/drquinn, 200 for admin). Invite codes use crypto-strong secrets.token_hex(4) suffix; prefix sanitation is present.",
+    "OK: /api/admin/users enriches rows with auth_provider (google/password) derived from google_sub && !password_hash — correctly marks all demo users as 'password'.",
+    "OK: /api/consent/transparency returns data_on_file (6 counters), consent_snapshot (no leaked id/user_id/updated_at), and exactly the 5 required principles (consent_first, explainable, anonymizable, human_in_loop, right_to_export_delete).",
+    "OK: /api/consent/access-log only returns events where target_user_id == current user, strips actor_id, exposes actor_email/role. Populates after clinician view as specified.",
+    "OK: Frontend — Login page renders data-testid='google-login-btn'. Signup page renders the Google button for recovery_user and supporter roles, hides it for clinician role (verified by programmatically switching role-clinician test-id). /auth/callback renders data-testid='auth-callback' (confirmed via early selector check — note: with no #session_id hash the page auto-redirects to /login after ~1200ms, which is correct behavior; the test-id is present during that window).",
+    "OK: Frontend — /admin renders data-testid='admin-page' with stats panel 'admin-stats' and 3 tabs (Users/Clinician Invites/Audit Log) for admin user. Non-admin (alex) sees data-testid='admin-denied' panel and not admin-page. Navbar nav-admin link only visible for is_admin.",
+    "OK: Frontend — /app/privacy renders data-testid='trust-dashboard' with 'trust-principles', 'data-on-file', and 'access-log' sections for a recovery_user. Consent toggles round-trip (GET → PATCH flip → GET verifies) on all 8 boolean keys.",
+    "OK: Frontend — /clinician renders Export clinical PDF button with data-testid='export-pdf-btn' after selecting a patient (button appears only when a patient is active, which is the correct UX).",
+    "OK: Regression — email/password login still works for alex/sam/drquinn/admin. /api/auth/me works with only or_token cookie (no Bearer). Role-based endpoints (health/risk/latest, supporter/connections, clinician/overview) still 200 per role. Logout emits Set-Cookie clearing or_token and subsequent /me returns 401. Stale/expired token paths from iteration_1 still honored.",
+    "MINOR (already noted): AuthCallback.jsx redirects to /login after 1200ms when there's no #session_id in the hash — this IS the correct UX, but automated tests visiting /auth/callback directly must grab the selector within ~1s. Not a bug; documented for next testing agent.",
+    "MINOR (style): routes_admin.reset_demo is un-authenticated by design (env-gated via ENABLE_DEMO_RESET), which is fine for demo but MUST be disabled in production. Consider also rate-limiting.",
+    "MINOR (style): routes_consent.transparency_summary currently strips consent id/user_id/updated_at via pop() — consider a Pydantic response model for stricter typing."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_own_recovery_upgrade_v3.py (new)",
+    "/app/test_reports/pytest/own_recovery_upgrade_v3.xml (new, pytest junit output)"
+  ],
+  "success_rate": {"backend": "100% (20/20)", "frontend": "100% on all checked data-testids and role-gated flows"},
+  "test_credentials": "Used /app/memory/test_credentials.md verbatim (alex/sam/drquinn/admin @demo.own / demo1234). All demo creds intact after final reseed.",
+  "seed_data_creation": "No new users created. Test mutations (1 invite created+revoked, 1 consent toggle flip then restored, a few clinician view/PDF events in audit_log) were either reverted in-test or cleaned by the final /api/admin/reset-demo POST.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Backend regression + new-feature tests live in /app/backend/tests/test_own_recovery_upgrade_v3.py (20 cases). The module auto-reseeds demo data on start. Iteration_1's test_auth_lifecycle.py and iteration_2's test_recovery_upgrade.py remain valid and were NOT modified. Google OAuth end-to-end cannot be tested in sandbox — only the bad-session-id rejection path is validated. When testing UI of /auth/callback directly, remember the 1200ms auto-redirect when no hash is present — grab the test-id selector with timeout<1000ms or inject a fake session_id in the URL hash to pin the page.",
+  "rca of the issue": "No defects found. One initial frontend check (direct /auth/callback visit) appeared to miss the 'auth-callback' test-id because the component's built-in redirect fired before the playwright query; re-tested with an immediate wait_for_selector and the component renders with the correct test-id in both no-hash and bogus-hash paths."
+}

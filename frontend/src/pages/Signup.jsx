@@ -9,6 +9,7 @@ import { Label } from "../components/ui/label";
 import { RadioGroup, RadioGroupItem } from "../components/ui/radio-group";
 import { Checkbox } from "../components/ui/checkbox";
 import PasswordInput from "../components/PasswordInput";
+import GoogleLoginButton from "../components/GoogleLoginButton";
 import { toast } from "sonner";
 import { Heart, Lock, Activity, Users, Eye, BadgeCheck, AlertTriangle } from "lucide-react";
 
@@ -145,6 +146,26 @@ export default function Signup() {
           <Button type="submit" disabled={loading} className="w-full bg-[#0F766E] hover:bg-[#115e59] text-white shadow-[0_0_24px_rgba(15,118,110,0.35)]" data-testid="signup-submit">
             {loading ? "Creating…" : "Create account"}
           </Button>
+
+          {role !== "clinician" && (
+            <>
+              <div className="relative py-1">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-white/10" />
+                </div>
+                <div className="relative flex justify-center text-[10px] uppercase tracking-[0.22em]">
+                  <span className="bg-transparent px-2 text-slate-500">or</span>
+                </div>
+              </div>
+              <GoogleLoginButton
+                intendedRole={role === "supporter" ? "supporter" : "recovery_user"}
+                label={`Continue with Google as ${role === "supporter" ? "Supporter" : "Recovery User"}`}
+              />
+              <p className="text-[11px] text-slate-500 text-center">
+                Google sign-in skips the password step. Your role is recorded as selected above.
+              </p>
+            </>
+          )}
 
           <div className="text-[11px] text-slate-500 flex items-center gap-2 pt-2 border-t border-white/5">
             <Lock className="w-3 h-3" />

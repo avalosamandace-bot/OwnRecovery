@@ -40,6 +40,7 @@ DEMO_USERS = [
     {"email": "morgan@demo.own", "name": "Morgan Lee", "role": "recovery_user", "password": "demo1234"},
     {"email": "sam@demo.own", "name": "Sam Patel", "role": "supporter", "password": "demo1234"},
     {"email": "drquinn@demo.own", "name": "Dr. Quinn Adams", "role": "clinician", "password": "demo1234"},
+    {"email": "admin@demo.own", "name": "Owen Admin", "role": "recovery_user", "password": "demo1234", "is_admin": True},
 ]
 
 
@@ -80,7 +81,7 @@ async def main():
     for col in ["health_entries", "risk_scores", "alerts",
                 "supporter_links", "encouragements", "weekly_summaries",
                 "clinician_invites", "relapses", "craving_checkins",
-                "tape_forward_entries", "twelve_steps_progress"]:
+                "tape_forward_entries", "twelve_steps_progress", "audit_log"]:
         await db[col].delete_many({})
 
     # Reset demo users to a known-good state via UPSERT (preserves stable ids)
@@ -106,6 +107,7 @@ async def main():
             verified_clinician=(u["role"] == "clinician"),
             verification_status=("simulated_verified" if u["role"] == "clinician" else None),
             organization=("City Behavioral Health" if u["role"] == "clinician" else None),
+            is_admin=bool(u.get("is_admin", False)),
         )
         if existing and existing.get("created_at"):
             kwargs["created_at"] = existing["created_at"]

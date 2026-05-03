@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
-import { api } from "../lib/api";
+import { api, API } from "../lib/api";
 import Navbar from "../components/Navbar";
 import TrendChart from "../components/TrendChart";
 import AlertCard from "../components/AlertCard";
-import { BadgeCheck, AlertTriangle } from "lucide-react";
+import { Button } from "../components/ui/button";
+import { BadgeCheck, AlertTriangle, FileDown } from "lucide-react";
+import { toast } from "sonner";
 
 const levelColor = {
   low: "text-emerald-300 bg-emerald-500/10 border-emerald-500/30",
@@ -34,6 +36,29 @@ export default function Clinician() {
     if (!selected) return;
     api.get(`/clinician/patients/${selected}`).then(r => setDetail(r.data));
   }, [selected]);
+
+  const exportPdf = async () => {
+    if (!selected) return;
+    try {
+      const r = await api.get(`/clinician/patients/${selected}/report.pdf`, {
+        responseType: "blob",
+      });
+      const blob = new Blob([r.data], { type: "application/pdf" });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      const cd = r.headers?.["content-disposition"] || "";
+      const m = /filename="([^"]+)"/.exec(cd);
+      link.download = m ? m[1] : `own-recovery-report-${selected}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      toast.success("Clinician report downloaded.");
+    } catch (err) {
+      toast.error(err?.response?.data?.detail || "Could not generate PDF.");
+    }
+  };
 
   if (error) {
     return (
@@ -108,12 +133,22 @@ export default function Clinician() {
             {detail && (
               <>
                 <div className="glass rounded-xl p-6">
-                  <div className="flex items-baseline justify-between">
+                  <div className="flex items-baseline justify-between gap-4 flex-wrap">
                     <div>
                       <h2 className="font-mono text-xl text-white">{detail.display_name}</h2>
                       <div className="text-xs text-slate-500 mt-1">{detail.anonymized ? "Anonymized per patient consent" : "Name visible per patient consent"}</div>
                     </div>
-                    <div className="text-xs text-slate-500">{detail.entries.length} entries · last 30d</div>
+                    <div className="flex items-center gap-3">
+                      <div className="text-xs text-slate-500">{detail.entries.length} entries · last 30d</div>
+                      <Button
+                        onClick={exportPdf}
+                        size="sm"
+                        data-testid="export-pdf-btn"
+                        className="bg-[#0F766E] hover:bg-[#115e59] text-white border border-[#22D3EE]/30 shadow-[0_0_18px_rgba(15,118,110,0.35)] flex items-center gap-2"
+                      >
+                        <FileDown className="w-4 h-4" /> Export clinical PDF
+                      </Button>
+                    </div>
                   </div>
                 </div>
 

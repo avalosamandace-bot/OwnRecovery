@@ -1,11 +1,12 @@
 import "@/App.css";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
 import { Toaster } from "@/components/ui/sonner";
 
 import Landing from "@/pages/Landing";
 import Login from "@/pages/Login";
 import Signup from "@/pages/Signup";
+import AuthCallback from "@/pages/AuthCallback";
 import Dashboard from "@/pages/Dashboard";
 import CheckIn from "@/pages/CheckIn";
 import Trends from "@/pages/Trends";
@@ -18,6 +19,7 @@ import Sobriety from "@/pages/Sobriety";
 import Craving from "@/pages/Craving";
 import Resources from "@/pages/Resources";
 import TwelveSteps from "@/pages/TwelveSteps";
+import Admin from "@/pages/Admin";
 
 function Guard({ roles, children }) {
   const { user, loading } = useAuth();
@@ -30,29 +32,44 @@ function Guard({ roles, children }) {
   return children;
 }
 
+function AppRoutes() {
+  // CRITICAL race-condition fix per Emergent Auth playbook:
+  // Detect Google OAuth session_id in the URL fragment SYNCHRONOUSLY during render
+  // and route to AuthCallback FIRST, before any ProtectedRoute / /auth/me check runs.
+  const location = useLocation();
+  if (typeof window !== "undefined" && location.hash && location.hash.includes("session_id=")) {
+    return <AuthCallback />;
+  }
+  return (
+    <Routes>
+      <Route path="/" element={<Landing />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/signup" element={<Signup />} />
+      <Route path="/auth/callback" element={<AuthCallback />} />
+
+      <Route path="/app" element={<Guard roles={["recovery_user"]}><Dashboard /></Guard>} />
+      <Route path="/app/onboarding" element={<Guard roles={["recovery_user"]}><Onboarding /></Guard>} />
+      <Route path="/app/checkin" element={<Guard roles={["recovery_user"]}><CheckIn /></Guard>} />
+      <Route path="/app/craving" element={<Guard roles={["recovery_user"]}><Craving /></Guard>} />
+      <Route path="/app/sobriety" element={<Guard roles={["recovery_user"]}><Sobriety /></Guard>} />
+      <Route path="/app/trends" element={<Guard roles={["recovery_user"]}><Trends /></Guard>} />
+      <Route path="/app/summary" element={<Guard roles={["recovery_user"]}><WeeklySummary /></Guard>} />
+      <Route path="/app/steps" element={<Guard roles={["recovery_user"]}><TwelveSteps /></Guard>} />
+      <Route path="/app/resources" element={<Guard roles={["recovery_user"]}><Resources /></Guard>} />
+      <Route path="/app/privacy" element={<Guard roles={["recovery_user"]}><Privacy /></Guard>} />
+
+      <Route path="/supporter" element={<Guard roles={["supporter"]}><Supporter /></Guard>} />
+      <Route path="/clinician" element={<Guard roles={["clinician"]}><Clinician /></Guard>} />
+      <Route path="/admin" element={<Admin />} />
+    </Routes>
+  );
+}
+
 function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Landing />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
-
-          <Route path="/app" element={<Guard roles={["recovery_user"]}><Dashboard /></Guard>} />
-          <Route path="/app/onboarding" element={<Guard roles={["recovery_user"]}><Onboarding /></Guard>} />
-          <Route path="/app/checkin" element={<Guard roles={["recovery_user"]}><CheckIn /></Guard>} />
-          <Route path="/app/craving" element={<Guard roles={["recovery_user"]}><Craving /></Guard>} />
-          <Route path="/app/sobriety" element={<Guard roles={["recovery_user"]}><Sobriety /></Guard>} />
-          <Route path="/app/trends" element={<Guard roles={["recovery_user"]}><Trends /></Guard>} />
-          <Route path="/app/summary" element={<Guard roles={["recovery_user"]}><WeeklySummary /></Guard>} />
-          <Route path="/app/steps" element={<Guard roles={["recovery_user"]}><TwelveSteps /></Guard>} />
-          <Route path="/app/resources" element={<Guard roles={["recovery_user"]}><Resources /></Guard>} />
-          <Route path="/app/privacy" element={<Guard roles={["recovery_user"]}><Privacy /></Guard>} />
-
-          <Route path="/supporter" element={<Guard roles={["supporter"]}><Supporter /></Guard>} />
-          <Route path="/clinician" element={<Guard roles={["clinician"]}><Clinician /></Guard>} />
-        </Routes>
+        <AppRoutes />
         <Toaster position="top-right" theme="dark" />
       </BrowserRouter>
     </AuthProvider>

@@ -22,7 +22,16 @@ export function AuthProvider({ children }) {
     }
   };
 
-  useEffect(() => { refresh(); }, []);
+  useEffect(() => {
+    // CRITICAL: If returning from Emergent OAuth (session_id in URL fragment),
+    // skip the /me probe — AuthCallback will exchange the session_id and
+    // establish the cookie first. Otherwise the boot probe races the callback.
+    if (typeof window !== "undefined" && window.location.hash && window.location.hash.includes("session_id=")) {
+      setLoading(false);
+      return;
+    }
+    refresh();
+  }, []);
 
   const setAuth = (_token, u) => {
     setUser(u);

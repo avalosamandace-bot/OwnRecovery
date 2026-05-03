@@ -124,3 +124,30 @@ def require_role(*roles):
         return user
 
     return checker
+
+
+async def require_admin(user=Depends(get_current_user)):
+    """Admin gate — `is_admin=True` required regardless of role."""
+    if not user.get("is_admin"):
+        raise HTTPException(status_code=403, detail="Admin access required.")
+    return user
+
+
+async def write_audit(actor: dict, action: str, target_user_id: str | None = None,
+                      target_email: str | None = None, meta: dict | None = None) -> None:
+    """Best-effort audit-log writer. Never raises into the request path."""
+    try:
+        db = get_db()
+        await db.audit_log.insert_one({
+            "actor_id": actor.get("id"),
+            "actor_email": actor.get("email"),
+            "actor_role": actor.get("role"),
+            "actor_is_admin": bool(actor.get("is_admin")),
+            "action": action,
+            "target_user_id": target_user_id,
+            "target_email": target_email,
+            "meta": meta or {},
+            "created_at": datetime.now(timezone.utc).isoformat(),
+        })
+    except Exception:
+        pass

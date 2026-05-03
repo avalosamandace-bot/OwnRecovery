@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { Button } from "./ui/button";
-import { LogOut, BadgeCheck } from "lucide-react";
+import { LogOut, BadgeCheck, Shield } from "lucide-react";
 
 const roleLabel = (r) => ({
   recovery_user: "Recovery",
@@ -56,6 +56,11 @@ export default function Navbar() {
 
         <nav className="flex items-center gap-5">
           {links()}
+          {user?.is_admin && (
+            <Link to="/admin" className="text-xs uppercase tracking-widest text-amber-300 hover:text-amber-200 flex items-center gap-1" data-testid="nav-admin">
+              <Shield className="w-3 h-3" /> Admin
+            </Link>
+          )}
           {user ? (
             <div className="flex items-center gap-3">
               {user.role === "clinician" && user.verified_clinician && (
