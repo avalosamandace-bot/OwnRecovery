@@ -11,7 +11,11 @@ export function AuthProvider({ children }) {
     try {
       const r = await api.get("/auth/me");
       setUser(r.data);
-    } catch {
+    } catch (err) {
+      // Stale or missing session — make sure server cookie is gone too
+      try { await api.post("/auth/logout"); } catch { /* ignore */ }
+      localStorage.removeItem("or_token");
+      localStorage.removeItem("or_user");
       setUser(null);
     } finally {
       setLoading(false);
@@ -21,7 +25,6 @@ export function AuthProvider({ children }) {
   useEffect(() => { refresh(); }, []);
 
   const setAuth = (_token, u) => {
-    // Cookie is set by backend. We just mirror user state.
     setUser(u);
   };
 

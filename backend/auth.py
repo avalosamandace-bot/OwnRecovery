@@ -58,9 +58,9 @@ def decode_jwt(token: str) -> dict:
     try:
         return jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
     except jwt.ExpiredSignatureError:
-        raise HTTPException(status_code=401, detail="Token expired")
+        raise HTTPException(status_code=401, detail="Session expired. Please sign in again.")
     except jwt.InvalidTokenError:
-        raise HTTPException(status_code=401, detail="Invalid token")
+        raise HTTPException(status_code=401, detail="Invalid session. Please sign in again.")
 
 
 async def verify_emergent_google_session(session_id: str) -> dict:
@@ -81,8 +81,22 @@ def get_db():
     return db
 
 
+CLEAR_COOKIE_HEADER = (
+    f"{COOKIE_NAME}=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=None"
+)
+
+
+def _unauthorized_with_cookie_clear(detail: str) -> HTTPException:
+    return HTTPException(
+        status_code=401,
+        detail=detail,
+        headers={"Set-Cookie": CLEAR_COOKIE_HEADER},
+    )
+
+
 async def get_current_user(
     request: Request,
+    response: Response,
     creds: Optional[HTTPAuthorizationCredentials] = Depends(bearer_scheme),
 ):
     # Prefer HttpOnly cookie, fall back to Authorization header
@@ -90,12 +104,16 @@ async def get_current_user(
     if not token and creds is not None:
         token = creds.credentials
     if not token:
-        raise HTTPException(status_code=401, detail="Not authenticated")
-    payload = decode_jwt(token)
+        raise HTTPException(status_code=401, detail="Not authenticated. Please sign in.")
+    try:
+        payload = decode_jwt(token)
+    except HTTPException as e:
+        # Stale/expired/invalid token: proactively clear the cookie
+        raise _unauthorized_with_cookie_clear(e.detail) from e
     db = get_db()
     user = await db.users.find_one({"id": payload["sub"]}, {"_id": 0, "password_hash": 0})
     if not user:
-        raise HTTPException(status_code=401, detail="User not found")
+        raise _unauthorized_with_cookie_clear("Session no longer valid. Please sign in again.")
     return user
 
 

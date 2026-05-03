@@ -29,6 +29,7 @@ from routes_sobriety import router as sobriety_router
 from routes_craving import router as craving_router
 from routes_resources import router as resources_router
 from routes_steps import router as steps_router
+from routes_admin import router as admin_router
 
 app.include_router(auth_router)
 app.include_router(health_router)
@@ -42,6 +43,7 @@ app.include_router(sobriety_router)
 app.include_router(craving_router)
 app.include_router(resources_router)
 app.include_router(steps_router)
+app.include_router(admin_router)
 
 
 @app.get("/api/")

@@ -1,7 +1,14 @@
-"""Demo seed data for Own Recovery."""
+"""Demo seed data for Own Recovery — IDEMPOTENT.
+
+Demo users get DETERMINISTIC ids derived from their email (uuid5), so:
+  • Re-seeding does NOT break tokens minted before the reseed.
+  • Logins remain stable across restarts, reseeds, and tests.
+  • Health/risk/alert history is fully refreshed, but users + consents persist.
+"""
 import asyncio
 import os
 import sys
+import uuid
 from pathlib import Path
 from datetime import datetime, timezone, timedelta
 import random
@@ -17,6 +24,14 @@ from models import UserDB, HealthEntry, RiskScore, Consent, SupporterLink, Clini
 from auth import hash_password
 from risk_engine import rule_based_score, get_logistic_model, detect_patterns
 from models import Alert
+
+
+_NS = uuid.UUID("3f8b9c1e-5a2d-4f6e-9b1c-8a7d6e5f4c3b")
+
+
+def demo_user_id(email: str) -> str:
+    """Deterministic user id from email — survives reseeds."""
+    return str(uuid.uuid5(_NS, email.lower().strip()))
 
 
 DEMO_USERS = [
@@ -61,11 +76,15 @@ async def main():
     client = AsyncIOMotorClient(mongo_url)
     db = client[os.environ["DB_NAME"]]
 
-    # Clear
-    for col in ["users", "health_entries", "risk_scores", "alerts",
-                "consents", "supporter_links", "encouragements", "weekly_summaries",
-                "clinician_invites"]:
+    # Wipe time-series + helper collections (NOT users/consents — preserve identity across reseeds)
+    for col in ["health_entries", "risk_scores", "alerts",
+                "supporter_links", "encouragements", "weekly_summaries",
+                "clinician_invites", "relapses", "craving_checkins",
+                "tape_forward_entries", "twelve_steps_progress"]:
         await db[col].delete_many({})
+
+    # Reset demo users to a known-good state via UPSERT (preserves stable ids)
+    demo_emails = [u["email"] for u in DEMO_USERS]
 
     # Seed clinician invite codes
     await db.clinician_invites.insert_many([
@@ -75,14 +94,32 @@ async def main():
 
     users = []
     for u in DEMO_USERS:
-        udb = UserDB(email=u["email"], name=u["name"], role=u["role"],
-                     password_hash=hash_password(u["password"]),
-                     verified_clinician=(u["role"] == "clinician"),
-                     verification_status=("simulated_verified" if u["role"] == "clinician" else None),
-                     organization=("City Behavioral Health" if u["role"] == "clinician" else None))
-        await db.users.insert_one(udb.model_dump())
-        await db.consents.insert_one(Consent(user_id=udb.id).model_dump())
-        users.append(udb.model_dump())
+        uid = demo_user_id(u["email"])
+        existing = await db.users.find_one({"email": u["email"]}, {"_id": 0})
+        # Build a fresh UserDB but FORCE the deterministic id and FRESH password hash
+        kwargs = dict(
+            id=uid,
+            email=u["email"],
+            name=u["name"],
+            role=u["role"],
+            password_hash=hash_password(u["password"]),
+            verified_clinician=(u["role"] == "clinician"),
+            verification_status=("simulated_verified" if u["role"] == "clinician" else None),
+            organization=("City Behavioral Health" if u["role"] == "clinician" else None),
+        )
+        if existing and existing.get("created_at"):
+            kwargs["created_at"] = existing["created_at"]
+        udb = UserDB(**kwargs)
+        doc = udb.model_dump()
+        # Upsert by email; collapse duplicates with stale ids
+        await db.users.update_one({"email": u["email"]}, {"$set": doc}, upsert=True)
+        await db.users.delete_many({"email": u["email"], "id": {"$ne": uid}})
+        await db.consents.update_one(
+            {"user_id": uid},
+            {"$setOnInsert": Consent(user_id=uid).model_dump()},
+            upsert=True,
+        )
+        users.append(doc)
 
     # Link Sam (supporter) to Alex & Jamie
     recovery_users = [u for u in users if u["role"] == "recovery_user"]

@@ -14,7 +14,7 @@ async def require_verified_clinician(user=Depends(require_role("clinician"))):
     if not user.get("verified_clinician"):
         raise HTTPException(
             status_code=403,
-            detail="Clinician account not verified. Contact an administrator.",
+            detail="Clinician not verified. Contact an administrator for an invite code.",
         )
     return user
 
