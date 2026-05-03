@@ -30,6 +30,10 @@ class AuthResponse(BaseModel):
     user: UserPublic
 
 
+class LoginRequest(UserLogin):
+    expected_role: str | None = None  # optional — if present, login must match role
+
+
 async def _ensure_consent(user_id: str):
     db = get_db()
     existing = await db.consents.find_one({"user_id": user_id}, {"_id": 0})
@@ -125,11 +129,23 @@ async def signup(payload: UserCreate, response: Response):
 
 
 @router.post("/login", response_model=AuthResponse)
-async def login(payload: UserLogin, response: Response):
+async def login(payload: LoginRequest, response: Response):
     db = get_db()
     user = await db.users.find_one({"email": payload.email}, {"_id": 0})
-    if not user or not user.get("password_hash") or not verify_password(payload.password, user["password_hash"]):
-        raise HTTPException(status_code=401, detail="Invalid email or password")
+    if not user:
+        raise HTTPException(status_code=401, detail="Email not found. Check the address or create a new account.")
+    if not user.get("password_hash"):
+        raise HTTPException(
+            status_code=401,
+            detail="This account was created via Google sign-in. Please use Google to log in.",
+        )
+    if not verify_password(payload.password, user["password_hash"]):
+        raise HTTPException(status_code=401, detail="Incorrect password.")
+    if payload.expected_role and user["role"] != payload.expected_role:
+        raise HTTPException(
+            status_code=403,
+            detail=f"Account role mismatch. This email is registered as {user['role']}, not {payload.expected_role}.",
+        )
     token = create_jwt(user["id"], user["role"])
     set_auth_cookie(response, token)
     return AuthResponse(token=token, user=_to_public(user))
