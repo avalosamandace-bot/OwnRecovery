@@ -8,6 +8,7 @@ import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { RadioGroup, RadioGroupItem } from "../components/ui/radio-group";
 import { Checkbox } from "../components/ui/checkbox";
+import PasswordInput from "../components/PasswordInput";
 import { toast } from "sonner";
 import { Heart, Lock, Activity, Users, Eye, BadgeCheck, AlertTriangle } from "lucide-react";
 
@@ -91,7 +92,16 @@ export default function Signup() {
           </div>
           <div>
             <Label htmlFor="password" className="text-xs uppercase tracking-wider text-slate-400">Password</Label>
-            <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} data-testid="signup-password" className="mt-1 bg-white/5 border-white/10 text-white" />
+            <div className="mt-1">
+              <PasswordInput
+                id="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                minLength={6}
+                testId="signup-password"
+              />
+            </div>
           </div>
 
           {role === "clinician" && (

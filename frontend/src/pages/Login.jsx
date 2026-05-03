@@ -6,6 +6,7 @@ import Navbar from "../components/Navbar";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
+import PasswordInput from "../components/PasswordInput";
 import { toast } from "sonner";
 
 export default function Login() {
@@ -47,7 +48,15 @@ export default function Login() {
           </div>
           <div>
             <Label htmlFor="password" className="text-xs uppercase tracking-wider text-slate-400">Password</Label>
-            <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required data-testid="login-password" className="mt-1 bg-white/5 border-white/10 text-white" />
+            <div className="mt-1">
+              <PasswordInput
+                id="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                testId="login-password"
+              />
+            </div>
           </div>
           <Button type="submit" disabled={loading} className="w-full bg-[#0F766E] hover:bg-[#115e59] text-white shadow-[0_0_24px_rgba(15,118,110,0.35)]" data-testid="login-submit">
             {loading ? "Signing in…" : "Sign in"}
