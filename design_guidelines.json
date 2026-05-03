@@ -1,0 +1,108 @@
+{
+  "theme": "light",
+  "archetype": "1 - Organic & Earthy (Editorial Clinical Variant)",
+  "emotional_tone": "Calm, trustworthy, transparent, restrained, clinical.",
+  "design_context": "Clinical decision-support dashboard / health monitoring SaaS",
+  "colors": {
+    "background": {
+      "main": "bg-stone-50",
+      "card": "bg-white",
+      "emphasis": "bg-stone-100"
+    },
+    "text": {
+      "primary": "text-stone-900",
+      "secondary": "text-stone-600",
+      "muted": "text-stone-400",
+      "inverse": "text-white"
+    },
+    "primary": {
+      "base": "bg-[#4A5D4E]",
+      "hover": "hover:bg-[#3B4A3E]",
+      "text": "text-[#4A5D4E]",
+      "border": "border-[#4A5D4E]"
+    },
+    "risk_levels": {
+      "low": "text-emerald-700 bg-emerald-50 border-emerald-200",
+      "medium": "text-amber-700 bg-amber-50 border-amber-200",
+      "high": "text-rose-700 bg-rose-50 border-rose-200"
+    },
+    "xai_visuals": {
+      "positive_contributor": "bg-rose-100 text-rose-800",
+      "negative_contributor": "bg-emerald-100 text-emerald-800",
+      "neutral": "bg-slate-100 text-slate-700"
+    },
+    "borders": "border-stone-200"
+  },
+  "typography": {
+    "fonts": {
+      "heading_marketing": "'Cormorant Garamond', serif",
+      "heading_dashboard": "'IBM Plex Sans', sans-serif",
+      "body": "'IBM Plex Sans', sans-serif"
+    },
+    "rules": {
+      "h1": "text-5xl lg:text-6xl font-serif tracking-tight text-stone-900",
+      "h2": "text-3xl lg:text-4xl font-serif tracking-tight text-stone-900",
+      "dashboard_h1": "text-2xl font-medium tracking-tight text-stone-900",
+      "dashboard_h2": "text-lg font-medium text-stone-800",
+      "body": "text-base text-stone-600 leading-relaxed",
+      "small_labels": "text-xs font-semibold uppercase tracking-[0.2em] text-stone-500"
+    }
+  },
+  "layout": {
+    "spacing": {
+      "section_padding": "py-20 lg:py-32",
+      "card_padding": "p-6 lg:p-8",
+      "gap_marketing": "gap-12 lg:gap-24",
+      "gap_dashboard": "gap-6"
+    },
+    "surfaces": {
+      "cards": "bg-white border border-stone-200 rounded-md shadow-sm",
+      "alerts": "rounded-md border p-4 flex items-start gap-4",
+      "glass": "bg-white/80 backdrop-blur-xl border-b border-stone-200"
+    },
+    "grid_modes": {
+      "dashboard": "grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6",
+      "bento_marketing": "grid grid-cols-1 md:grid-cols-12 gap-8"
+    }
+  },
+  "components": {
+    "buttons": {
+      "primary": "inline-flex items-center justify-center rounded-md bg-[#4A5D4E] px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#3B4A3E] focus:outline-none focus:ring-2 focus:ring-[#4A5D4E] focus:ring-offset-2",
+      "secondary": "inline-flex items-center justify-center rounded-md border border-stone-200 bg-white px-6 py-2.5 text-sm font-medium text-stone-900 transition-colors hover:bg-stone-50 focus:outline-none focus:ring-2 focus:ring-stone-200 focus:ring-offset-2"
+    },
+    "inputs": {
+      "text": "flex h-10 w-full rounded-md border border-stone-200 bg-white px-3 py-2 text-sm placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-[#4A5D4E] focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50"
+    },
+    "charts": {
+      "library": "recharts",
+      "style": "minimal grid lines (strokeDasharray='3 3', stroke='#E5E7EB'), smooth curves (type='monotone'), no heavy drop shadows."
+    }
+  },
+  "media": {
+    "hero_background": {
+      "url": "https://images.unsplash.com/photo-1760442903746-ae62ef76c6b4?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAxODF8MHwxfHNlYXJjaHwyfHxzb2Z0JTIwYWJzdHJhY3QlMjBncmFkaWVudCUyMGJhY2tncm91bmQlMjBtdXRlZHxlbnwwfHx8fDE3Nzc3NzA4MDF8MA&ixlib=rb-4.1.0&q=85",
+      "description": "Soft muted blue and white gradient background, perfect for a calming landing page hero section."
+    },
+    "clinical_environment": {
+      "url": "https://images.pexels.com/photos/7789620/pexels-photo-7789620.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+      "description": "Clean, well-lit modern clinical room, establishing medical authority and trust."
+    },
+    "recovery_lifestyle": {
+      "url": "https://images.unsplash.com/photo-1764974012590-f9b87a6fcf3c?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjY2NzN8MHwxfHNlYXJjaHwxfHxqb3VybmFsaW5nJTIwaGFuZHMlMjB0ZWElMjBtb3JuaW5nfGVufDB8fHx8MTc3Nzc3MDc5N3ww&ixlib=rb-4.1.0&q=85",
+      "description": "Hands journaling next to a plant, representing the daily check-in and recovery process."
+    },
+    "abstract_nature_accent": {
+      "url": "https://images.unsplash.com/photo-1767589661359-4c9129577f3f?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1OTV8MHwxfHNlYXJjaHwxfHxwbGFudCUyMHNoYWRvdyUyMHdhbGwlMjBjYWxtfGVufDB8fHx8MTc3Nzc3MDgwMXww&ixlib=rb-4.1.0&q=85",
+      "description": "Calming plant shadow on a textured wall, useful for empty states or subtle section breaks."
+    }
+  },
+  "instructions_to_main_agent": {
+    "general": "Build a React-based SPA with Tailwind CSS and Shadcn UI. All components must be in JS (no TS).",
+    "design_system": "Strictly follow the color and typography rules. The UI must feel like 'The Lancet meets Linear'—highly readable, structured, and clinically serious, yet approachable via warm earthy tones (sage/stone). Avoid purple/neon.",
+    "xai_implementation": "The Explainable AI (XAI) feature is core. Whenever a Risk Score is shown, it must be accompanied by an Explainable AI Panel (feature contribution bar chart or text breakdown) explaining WHY the score exists (e.g., 'Sleep decreased (-2h) -> +15 Risk').",
+    "dashboard_rules": "Do not overuse heavy shadows. Use flat surfaces with 1px stone-200 borders. The layout should be dense but highly readable (Mode B: Control Room grid).",
+    "icons": "Use lucide-react (default). Keep icon usage functional, not decorative.",
+    "testing": "All interactive and key informational elements MUST include a `data-testid` attribute (e.g., data-testid='daily-checkin-submit').",
+    "routing": "Ensure navigation is clear with distinct views for Recovery User, Supporter, and Clinician, gated by simple state-based role selection."
+  }
+}
