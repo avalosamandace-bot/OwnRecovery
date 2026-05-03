@@ -1,8 +1,8 @@
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=Inter+Tight:wght@500;600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
 body {
     margin: 0;
@@ -11,12 +11,26 @@ body {
     -moz-osx-font-smoothing: grayscale;
     background-color: #0B1220;
     color: #E2E8F0;
-    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11", "ss01";
+    line-height: 1.6;
+    letter-spacing: -0.005em;
 }
 
+/* `.font-serif` is used across the app for display titles & risk numbers.
+   We remap it to Sora (display) for a modern, technical, premium feel —
+   no other files need to change. */
 .font-serif {
-    font-family: 'Instrument Serif', serif;
-    letter-spacing: -0.01em;
+    font-family: 'Sora', 'Inter Tight', system-ui, sans-serif !important;
+    font-style: normal;
+    letter-spacing: -0.025em;
+    font-weight: 600;
+}
+
+/* Default headings */
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Sora', 'Inter Tight', system-ui, sans-serif;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
 }
 
 .font-mono {
