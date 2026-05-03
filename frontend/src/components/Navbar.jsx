@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { Button } from "./ui/button";
-import { LogOut, Activity, BadgeCheck } from "lucide-react";
+import { LogOut, BadgeCheck } from "lucide-react";
 
 const roleLabel = (r) => ({
   recovery_user: "Recovery",
@@ -39,9 +39,12 @@ export default function Navbar() {
     <header className="sticky top-0 z-40 bg-[#0B1220]/70 backdrop-blur-xl border-b border-white/5" data-testid="navbar">
       <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
         <Link to={user ? (user.role === "recovery_user" ? "/app" : user.role === "supporter" ? "/supporter" : "/clinician") : "/"} className="flex items-center gap-2.5 group" data-testid="brand">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#0F766E] via-[#22D3EE] to-[#4F46E5] flex items-center justify-center shadow-[0_0_24px_rgba(34,211,238,0.25)]">
-            <Activity className="w-4 h-4 text-white" strokeWidth={2.5} />
-          </div>
+          <img
+            src="/logo.png"
+            alt="Own Recovery"
+            className="w-9 h-9 rounded-lg object-contain"
+            style={{ filter: "drop-shadow(0 0 12px rgba(34, 211, 238, 0.35))" }}
+          />
           <div className="flex items-baseline gap-2">
             <span className="font-serif text-xl tracking-tight text-white">Own Recovery</span>
             <span className="hidden md:inline text-[10px] uppercase tracking-[0.22em] text-slate-500">AI Clinical Intelligence</span>
