@@ -66,13 +66,45 @@ Build a medical AI-inspired, human-in-the-loop behavioral health monitoring syst
 ## Backlog
 ### P1
 - Refresh-token flow (currently JWT 7d lifetime)
-- Admin UI to mint new clinician invite codes
 - Real email notifications for supporter invites + high-risk alerts
-- Relapse Recovery Mode (user's requested additional feature, UI tone shift on relapse log)
-- Export PDF summary for clinician handoff
+- Real Google OAuth E2E test fixtures (currently sandboxed cannot complete the round trip)
 ### P2
 - Gemini/Claude alternative LLM providers + model selection
 - Data anonymization pipeline for research dataset export
 - Time-series forecasting model (Prophet/ARIMA) replacing heuristic forecast
-- Audit log for clinician access (who viewed which patient when)
 - Real HIPAA-compliant object-storage backend for attachments
+
+## Changelog — 2026-05-03 (this session)
+### ✅ Google Social Login (Emergent OAuth) — hybrid auth, optional
+- Backend: `POST /api/auth/google` (existed; left intact) — exchanges Emergent `session_id`, finds-or-creates user, mints same `or_token` JWT cookie used by email/password
+- Frontend: `GoogleLoginButton` component, `AuthCallback` page at `/auth/callback`
+- `App.js` `AppRoutes` synchronously detects `#session_id=` in URL hash and routes to AuthCallback BEFORE any /me probe (race-condition-safe)
+- `AuthContext` skips `/me` boot probe when hash contains `session_id=`
+- Clinician role NOT allowed via Google sign-in (must use invite-code email signup)
+
+### ✅ Clinician PDF Export
+- New endpoint `GET /api/clinician/patients/{id}/report.pdf` (reportlab) — Snapshot, 14-day risk/signal trend table, XAI feature contributions, narrative, detected patterns, alerts log, audit footer
+- Respects `anonymize_clinician_view` consent (uses P-code or real name)
+- Writes audit_log row with action `export_patient_pdf`
+- Frontend: "Export clinical PDF" button on `/clinician` patient panel
+
+### ✅ Admin / Backoffice Console
+- New `is_admin` gate (`require_admin`) + `write_audit()` helper in `auth.py`
+- Endpoints under `/api/admin/`: `me`, `users`, `users/{id}` (PATCH flags), `invites` (GET/POST), `invites/{code}/revoke`, `audit-log`, `stats`
+- Auto-audit on clinician view-patient, list-patients, PDF-export, admin user-list, admin invite-create/revoke, admin user-update
+- New seed user `admin@demo.own / demo1234` (`is_admin=true`)
+- Frontend: `/admin` page with 3 tabs (Users / Clinician Invites / Audit Log), invite generator with prefix + email-restriction + expiry, revoke action, action filter on audit log
+- Navbar shows "Admin" link only when `user.is_admin`
+
+### ✅ Trust + Privacy Dashboard
+- New endpoints `GET /api/consent/transparency` (data-on-file counts, consent snapshot, 5 trust principles) and `GET /api/consent/access-log` (events where target_user_id == self)
+- `Privacy.jsx` rewritten as Trust Dashboard: hero metrics (sharing posture, anonymization, data points), 5 principle cards, "What we have on file" counters, granular consent toggles, "Who accessed my record" table, supporter invites, CSV export, delete-all
+- Patients can now SEE every clinician/admin access event on their own record
+
+### Regression results
+- 20/20 new backend pytest cases pass + previous 24/24 unaffected
+- Email/password login intact for all 6 demo users
+- Cookie-only auth (`or_token`) intact; logout properly clears cookie
+- Role-based routing intact; clinician verification still enforced
+- Stale-cookie auto-clear behavior preserved
+
