@@ -50,6 +50,12 @@ def _to_public(u: dict) -> UserPublic:
         verification_status=u.get("verification_status"),
         organization=u.get("organization"),
         onboarding_mode=u.get("onboarding_mode"),
+        sobriety_start_date=u.get("sobriety_start_date"),
+        longest_streak_days=int(u.get("longest_streak_days", 0)),
+        why_i_am_sober=u.get("why_i_am_sober"),
+        motivation_tags=u.get("motivation_tags", []) or [],
+        supporter_alerts_enabled=bool(u.get("supporter_alerts_enabled", False)),
+        is_admin=bool(u.get("is_admin", False)),
     )
 
 

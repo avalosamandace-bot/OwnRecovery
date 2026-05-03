@@ -1,0 +1,49 @@
+{
+  "summary": "Iteration 2 — backend-only validation of the Sobriety + Recovery Support upgrade. Added /app/backend/tests/test_recovery_upgrade.py with 29 new pytest cases covering /api/sobriety/* (start/status/relapse/why), /api/craving/* (interventions/checkin/after/tape-forward/recent), /api/resources, /api/steps + /api/steps/{n}/reflect (incl. boundary 0 and 13), /api/insights/observations extended with recovery_score+confidence+trigger_insights, and /auth/me now exposing the new user fields (sobriety_start_date, longest_streak_days, why_i_am_sober, motivation_tags, supporter_alerts_enabled, is_admin). Also re-ran iteration_1 backend_test.py (24 cases) — all green. Total: 53/53 passing.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_recovery_upgrade.py",
+    "/app/backend/tests/backend_test.py",
+    "/app/test_reports/pytest/recovery_upgrade.xml",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [
+    "Self-test by running: pytest /app/backend/tests/ -v",
+    "Demo state side-effect: jamie@demo.own now has 1 relapse logged and sobriety_start_date set to tomorrow (current_streak_days=0) due to the relapse-flow test. morgan@demo.own sobriety_start_date is now ~100 days ago (was 365). If a fresh demo posture is required, re-run /app/backend/seed.py."
+  ],
+  "critical_code_review_comments": [
+    "OK: /api/sobriety/start correctly rejects future dates and invalid format with 400; on success persists sobriety_start_date AND bumps longest_streak_days when current > stored max — verified.",
+    "OK: /api/sobriety/relapse defaults date to today, inserts Relapse doc, sets sobriety_start_date to (relapse_date + 1 day), returning supportive_message + new_start_date — verified streak resets to 0.",
+    "OK: /api/sobriety/status auto-corrects longest_streak_days if current exceeds it (self-healing), and exposes milestones_reached + next_milestone + days_to_next_milestone — verified.",
+    "OK: /api/resources requires auth (401 without token), returns >=7 categories and 14 resources with all required fields. 5 sampled external links (988lifeline.org, samhsa.gov, alcoholtreatment.niaaa.nih.gov, nida.nih.gov, aa.org) all resolved 200/3xx.",
+    "OK: /api/steps/0/reflect and /api/steps/13/reflect both return 400 (boundary correctly enforced inside handler before Pydantic validation).",
+    "OK: /api/craving/checkin/INVALID/after returns 404 (matched_count==0 path).",
+    "OK: /api/craving/tape-forward returns 422 when fields missing (Pydantic min_length=1 on all four q-fields enforces).",
+    "OK: compute_recovery_score for alex (90 days seeded + ~30 entries) returns score >=60 with level steady/strong; helpers list populated; components dict has consistency, sleep_stability, cravings, sobriety_streak, accountability — verified 75.1/100 in run.",
+    "OK: /auth/me returns the 6 new user fields (sobriety_start_date, longest_streak_days, why_i_am_sober, motivation_tags, supporter_alerts_enabled, is_admin) — _to_public correctly extended.",
+    "OK: All existing endpoints (check-in, alerts, CSV export, consent, supporter view, clinician panel/overview, weekly summary, observations) still pass — no regression introduced by the upgrade.",
+    "MINOR (non-blocking): routes_sobriety._days_between uses date.fromisoformat but does not handle timezone — borderline-correctness if user is far from UTC at midnight; acceptable for demo.",
+    "MINOR (non-blocking): routes_steps does not return updated step in POST response — the test reads it back via GET; would be nicer to return the upserted doc to save a round-trip.",
+    "MINOR (style): routes_craving.recent uses isoformat string compare on created_at; works because all writes use ISO UTC, but a real datetime field would be safer for future cross-tz inserts.",
+    "OBSERVATION: /api/sobriety/relapse does not (yet) reset longest_streak_days — by design, since longest is the all-time-best peak. Verified consistent with model.",
+    "OBSERVATION: /api/resources is purely static in code (RESOURCES list); easy to maintain but adding/removing a resource requires a deploy. Consider moving to DB later if non-engineers need to edit."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_recovery_upgrade.py (new)"
+  ],
+  "success_rate": {"backend": "100% (53/53 across both test files)", "frontend": "skipped per request"},
+  "test_credentials": "Used /app/memory/test_credentials.md verbatim (alex/jamie/morgan/sam/drquinn @demo.own / demo1234).",
+  "seed_data_creation": "No new seed users created. Side-effects on demo data: jamie has 1 new Relapse + start_date moved to tomorrow (streak=0); morgan start_date set to today-100d; jamie why_i_am_sober + motivation_tags overwritten with test text; alex got 1 new health check-in, 1 craving check-in (with after-update), 1 tape-forward entry; morgan now has step 3 marked reflected.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "All 53 backend tests pass. New tests live in /app/backend/tests/test_recovery_upgrade.py and cover the full sobriety/craving/resources/steps/insights surface. If the next iteration needs pristine demo state, re-run /app/backend/seed.py BEFORE running tests because the relapse + start-date flows mutate jamie/morgan persistently. The 5 sampled external resource links all resolve, but they are public sites — flaky-net would be the only foreseeable false-fail (test allows up to 1 transient failure). Frontend was intentionally skipped — main agent is verifying UI via screenshots.",
+  "rca of the issue": "No defects found in this iteration. The new endpoints integrate cleanly: routes_sobriety/craving/resources/steps/insights are all wired in server.py, share the same auth dependency (require_role('recovery_user') except resources which uses get_current_user, and existing endpoints remain untouched. risk_engine.compute_recovery_score and compute_confidence are deterministic and properly bounded (0..100). _to_public in routes_auth was correctly extended to surface the 6 new user fields, and seed.py populates sobriety_start_date + why_i_am_sober for alex/jamie/morgan as expected by the spec."
+}

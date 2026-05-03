@@ -101,6 +101,25 @@ async def main():
     today = datetime.now(timezone.utc).date()
 
     for ru, profile in zip(recovery_users, profiles):
+        # Demo sobriety setup
+        sobriety_days_map = {"improving": 90, "declining": 4, "stable": 365}
+        days = sobriety_days_map.get(profile, 30)
+        start = (today - timedelta(days=days)).isoformat()
+        why_map = {
+            "improving": "For my daughter's birthday this year, and to wake up without dread.",
+            "declining": "To stop missing the moments that matter. For my partner. For me.",
+            "stable": "Because I have proven I can do hard things, and I will not undo this.",
+        }
+        await db.users.update_one(
+            {"id": ru["id"]},
+            {"$set": {
+                "sobriety_start_date": start,
+                "longest_streak_days": days,
+                "why_i_am_sober": why_map.get(profile, ""),
+                "motivation_tags": ["family", "future", "self"],
+            }},
+        )
+
         for d in range(30):
             entry_date = (today - timedelta(days=29 - d)).strftime("%Y-%m-%d")
             s = _synth_entry(d, profile)

@@ -25,6 +25,10 @@ from routes_consent import router as consent_router
 from routes_llm import router as llm_router
 from routes_insights import router as insights_router
 from routes_onboarding import router as onboarding_router
+from routes_sobriety import router as sobriety_router
+from routes_craving import router as craving_router
+from routes_resources import router as resources_router
+from routes_steps import router as steps_router
 
 app.include_router(auth_router)
 app.include_router(health_router)
@@ -34,6 +38,10 @@ app.include_router(consent_router)
 app.include_router(llm_router)
 app.include_router(insights_router)
 app.include_router(onboarding_router)
+app.include_router(sobriety_router)
+app.include_router(craving_router)
+app.include_router(resources_router)
+app.include_router(steps_router)
 
 
 @app.get("/api/")

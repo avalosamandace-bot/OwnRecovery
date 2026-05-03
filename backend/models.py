@@ -47,6 +47,12 @@ class UserPublic(BaseModel):
     verification_status: Optional[VerificationStatus] = None
     organization: Optional[str] = None
     onboarding_mode: Optional[str] = None  # "guided" or None
+    sobriety_start_date: Optional[str] = None
+    longest_streak_days: int = 0
+    why_i_am_sober: Optional[str] = None
+    motivation_tags: List[str] = []
+    supporter_alerts_enabled: bool = False
+    is_admin: bool = False
 
 
 class UserDB(BaseModel):
@@ -61,7 +67,103 @@ class UserDB(BaseModel):
     license_number: Optional[str] = None
     organization: Optional[str] = None
     onboarding_mode: Optional[str] = None
+    sobriety_start_date: Optional[str] = None  # YYYY-MM-DD
+    longest_streak_days: int = 0
+    why_i_am_sober: Optional[str] = None
+    motivation_tags: List[str] = []
+    supporter_alerts_enabled: bool = False
+    is_admin: bool = False
     created_at: str = Field(default_factory=_iso_now)
+
+
+# ---------- Sobriety ----------
+class SobrietyStartRequest(BaseModel):
+    start_date: str  # YYYY-MM-DD
+
+
+class WhyImSoberRequest(BaseModel):
+    why_i_am_sober: str = Field(min_length=1, max_length=600)
+    motivation_tags: List[str] = []
+
+
+class RelapseRequest(BaseModel):
+    date: Optional[str] = None  # YYYY-MM-DD; defaults today
+    note: Optional[str] = ""
+    notify_supporter: bool = False
+
+
+class Relapse(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=_uid)
+    user_id: str
+    date: str
+    note: str = ""
+    created_at: str = Field(default_factory=_iso_now)
+
+
+# ---------- Craving toolkit ----------
+class CravingCheckinRequest(BaseModel):
+    level_before: int = Field(ge=0, le=10)
+    trigger: Optional[str] = ""
+    note: Optional[str] = ""
+    context: Optional[str] = ""
+
+
+class CravingAfterRequest(BaseModel):
+    level_after: int = Field(ge=0, le=10)
+    intervention_used: Optional[str] = ""  # "urge_surfing", "tape_forward", "breathing", etc.
+
+
+class CravingCheckin(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=_uid)
+    user_id: str
+    level_before: int
+    level_after: Optional[int] = None
+    trigger: str = ""
+    note: str = ""
+    context: str = ""
+    intervention_used: Optional[str] = None
+    created_at: str = Field(default_factory=_iso_now)
+
+
+class TapeForwardRequest(BaseModel):
+    q1_if_use: str = Field(min_length=1)
+    q2_what_happens_after: str = Field(min_length=1)
+    q3_how_tomorrow: str = Field(min_length=1)
+    q4_safer_choice: str = Field(min_length=1)
+
+
+class TapeForwardEntry(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=_uid)
+    user_id: str
+    q1_if_use: str
+    q2_what_happens_after: str
+    q3_how_tomorrow: str
+    q4_safer_choice: str
+    created_at: str = Field(default_factory=_iso_now)
+
+
+# ---------- 12-Step Progress ----------
+class StepReflectRequest(BaseModel):
+    reflection: Optional[str] = ""
+    marked_reflected: bool = True
+
+
+class StepProgress(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=_uid)
+    user_id: str
+    step_number: int
+    reflection: str = ""
+    marked_reflected: bool = False
+    updated_at: str = Field(default_factory=_iso_now)
+
+
+# ---------- Supporter alerts toggle ----------
+class SupporterAlertsToggle(BaseModel):
+    enabled: bool
 
 
 # ---------- Clinician Invite ----------

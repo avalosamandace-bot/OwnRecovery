@@ -14,6 +14,10 @@ import Privacy from "@/pages/Privacy";
 import Supporter from "@/pages/Supporter";
 import Clinician from "@/pages/Clinician";
 import Onboarding from "@/pages/Onboarding";
+import Sobriety from "@/pages/Sobriety";
+import Craving from "@/pages/Craving";
+import Resources from "@/pages/Resources";
+import TwelveSteps from "@/pages/TwelveSteps";
 
 function Guard({ roles, children }) {
   const { user, loading } = useAuth();
@@ -38,8 +42,12 @@ function App() {
           <Route path="/app" element={<Guard roles={["recovery_user"]}><Dashboard /></Guard>} />
           <Route path="/app/onboarding" element={<Guard roles={["recovery_user"]}><Onboarding /></Guard>} />
           <Route path="/app/checkin" element={<Guard roles={["recovery_user"]}><CheckIn /></Guard>} />
+          <Route path="/app/craving" element={<Guard roles={["recovery_user"]}><Craving /></Guard>} />
+          <Route path="/app/sobriety" element={<Guard roles={["recovery_user"]}><Sobriety /></Guard>} />
           <Route path="/app/trends" element={<Guard roles={["recovery_user"]}><Trends /></Guard>} />
           <Route path="/app/summary" element={<Guard roles={["recovery_user"]}><WeeklySummary /></Guard>} />
+          <Route path="/app/steps" element={<Guard roles={["recovery_user"]}><TwelveSteps /></Guard>} />
+          <Route path="/app/resources" element={<Guard roles={["recovery_user"]}><Resources /></Guard>} />
           <Route path="/app/privacy" element={<Guard roles={["recovery_user"]}><Privacy /></Guard>} />
 
           <Route path="/supporter" element={<Guard roles={["supporter"]}><Supporter /></Guard>} />

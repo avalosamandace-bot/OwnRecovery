@@ -21,8 +21,11 @@ export default function Navbar() {
       <>
         <Link to="/app" className="text-sm text-slate-400 hover:text-white transition-colors" data-testid="nav-dashboard">Command</Link>
         <Link to="/app/checkin" className="text-sm text-slate-400 hover:text-white transition-colors" data-testid="nav-checkin">Check-in</Link>
+        <Link to="/app/craving" className="text-sm text-slate-400 hover:text-white transition-colors" data-testid="nav-craving">Craving</Link>
+        <Link to="/app/sobriety" className="text-sm text-slate-400 hover:text-white transition-colors" data-testid="nav-sobriety">Sobriety</Link>
         <Link to="/app/trends" className="text-sm text-slate-400 hover:text-white transition-colors" data-testid="nav-trends">Trends</Link>
-        <Link to="/app/summary" className="text-sm text-slate-400 hover:text-white transition-colors" data-testid="nav-summary">Weekly</Link>
+        <Link to="/app/steps" className="text-sm text-slate-400 hover:text-white transition-colors" data-testid="nav-steps">Steps</Link>
+        <Link to="/app/resources" className="text-sm text-slate-400 hover:text-white transition-colors" data-testid="nav-resources">Resources</Link>
         <Link to="/app/privacy" className="text-sm text-slate-400 hover:text-white transition-colors" data-testid="nav-privacy">Privacy</Link>
       </>
     );

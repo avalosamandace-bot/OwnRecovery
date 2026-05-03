@@ -258,3 +258,113 @@ def moving_average(values: List[float], window: int = 7) -> List[Optional[float]
         else:
             out.append(round(sum(values[i + 1 - window:i + 1]) / window, 2))
     return out
+
+
+# ---------- Risk Confidence ----------
+def compute_confidence(entries: List[dict]) -> Dict:
+    """Confidence in the risk reading given data completeness."""
+    n = len(entries)
+    if n >= 14:
+        level, label = "high", "High"
+    elif n >= 5:
+        level, label = "medium", "Medium"
+    else:
+        level, label = "low", "Low"
+    reasons = []
+    if n < 5:
+        reasons.append(f"Only {n} recent check-in(s); need a few more for stable predictions.")
+    elif n < 14:
+        reasons.append(f"{n} check-ins logged; confidence will rise with consistent daily data.")
+    else:
+        reasons.append(f"{n} check-ins in the last window — strong base for inference.")
+    return {"level": level, "label": label, "reasons": reasons, "n_entries": n}
+
+
+# ---------- Recovery Score (positive protective factors) ----------
+def compute_recovery_score(
+    entries: List[dict],
+    sobriety_days: int,
+    craving_checkins: List[dict],
+    showed_up_count: int = 0,
+) -> Dict:
+    """
+    Recovery Score 0-100 reflects PROTECTIVE factors. Designed to balance the risk score emotionally.
+    Components:
+      - check-in consistency (days logged in last 14): up to 25
+      - sleep stability (avg 7-9h, low variance): up to 20
+      - cravings trending lower / using interventions: up to 20
+      - sobriety streak (logarithmic): up to 25
+      - accountability ('showed up' reflections): up to 10
+    """
+    helpers, improvers = [], []
+
+    # Check-in consistency
+    last14 = entries[-14:]
+    consistency_pts = round(min(len(last14) / 14.0, 1.0) * 25, 1)
+    if consistency_pts >= 18:
+        helpers.append(f"Check-in consistency ({len(last14)} of last 14 days)")
+    else:
+        improvers.append("Log a check-in daily — even brief ones build the picture.")
+
+    # Sleep stability
+    sleep_pts = 0.0
+    if last14:
+        sleeps = [e["sleep_hours"] for e in last14]
+        avg = sum(sleeps) / len(sleeps)
+        var = sum((s - avg) ** 2 for s in sleeps) / len(sleeps)
+        # Reward 7-9h average, low variance
+        target_pts = max(0.0, 1.0 - abs(avg - 8.0) / 4.0) * 12  # up to 12
+        var_pts = max(0.0, (4.0 - var) / 4.0) * 8                # up to 8 (low variance better)
+        sleep_pts = round(target_pts + var_pts, 1)
+        if sleep_pts >= 14:
+            helpers.append(f"Sleep stability (avg {avg:.1f}h)")
+        else:
+            improvers.append("Aim for consistent sleep (7-9h). Even one earlier bedtime helps.")
+
+    # Cravings: lower = better; effective interventions = bonus
+    craving_pts = 0.0
+    if craving_checkins:
+        avg_before = sum(c["level_before"] for c in craving_checkins) / len(craving_checkins)
+        # 0 cravings -> 12pts; 10 cravings -> 0
+        intensity_pts = max(0.0, (10.0 - avg_before) / 10.0) * 12
+        # Intervention effectiveness
+        deltas = [c["level_before"] - c["level_after"] for c in craving_checkins if c.get("level_after") is not None]
+        eff_pts = 0.0
+        if deltas:
+            eff_pts = max(0.0, min(8.0, (sum(deltas) / len(deltas)) * 2))
+        craving_pts = round(intensity_pts + eff_pts, 1)
+        if craving_pts >= 14:
+            helpers.append("Lower cravings and effective coping use")
+        elif deltas:
+            improvers.append("Keep using urge-surfing or play-the-tape — small wins compound.")
+    else:
+        craving_pts = 10.0  # neutral default if no craving data
+
+    # Sobriety streak (log scale)
+    import math
+    streak_pts = round(min(25.0, math.log10(max(1, sobriety_days)) * 12.5), 1)
+    if streak_pts >= 18:
+        helpers.append(f"Sobriety streak: {sobriety_days} day(s)")
+    elif sobriety_days < 7:
+        improvers.append("Set or confirm your sobriety start date.")
+
+    # Accountability "showed up"
+    showed_pts = round(min(10.0, showed_up_count * 1.5), 1)
+    if showed_pts >= 6:
+        helpers.append(f"You showed up for yourself {showed_up_count} day(s) recently")
+
+    total = round(consistency_pts + sleep_pts + craving_pts + streak_pts + showed_pts, 1)
+    total = max(0.0, min(100.0, total))
+    return {
+        "score": total,
+        "level": "strong" if total >= 70 else ("steady" if total >= 40 else "early"),
+        "components": {
+            "consistency": consistency_pts,
+            "sleep_stability": sleep_pts,
+            "cravings": craving_pts,
+            "sobriety_streak": streak_pts,
+            "accountability": showed_pts,
+        },
+        "helpers": helpers,
+        "improvers": improvers,
+    }

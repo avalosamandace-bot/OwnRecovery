@@ -1,8 +1,10 @@
-"""AI Observations + Insight Cards + forecast — data-grounded, rule-based."""
+"""AI Observations + Insight Cards + forecast + Recovery Score + Trigger insights."""
 from fastapi import APIRouter, Depends
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone, timedelta, date
 from typing import List, Dict, Any
+from collections import Counter
 from auth import require_role, get_db
+from risk_engine import compute_recovery_score, compute_confidence
 
 router = APIRouter(prefix="/api/insights", tags=["insights"])
 
@@ -142,4 +144,47 @@ async def observations(user=Depends(require_role("recovery_user"))):
     if not obs:
         obs.append({"tone": "neutral", "text": "No significant changes observed this week. Keep logging check-ins to build the picture."})
 
-    return {"observations": obs, "insight_cards": cards, "forecast": risk_forecast}
+    # ---- Recovery Score ----
+    sobriety_days = 0
+    fresh = await db.users.find_one({"id": user["id"]}, {"_id": 0})
+    if fresh and fresh.get("sobriety_start_date"):
+        try:
+            sobriety_days = max(0, (date.today() - date.fromisoformat(fresh["sobriety_start_date"])).days)
+        except Exception:
+            sobriety_days = 0
+    cravings = await db.craving_checkins.find(
+        {"user_id": user["id"]}, {"_id": 0}
+    ).sort("created_at", -1).to_list(30)
+    recovery = compute_recovery_score(entries, sobriety_days, cravings, showed_up_count=0)
+
+    # ---- Trigger pattern insights ----
+    trigger_insights: List[str] = []
+    all_triggers = []
+    for e in entries:
+        all_triggers.extend(e.get("triggers") or [])
+    high_craving = [c for c in cravings if c["level_before"] >= 7 and c.get("trigger")]
+    if all_triggers:
+        common = Counter(all_triggers).most_common(3)
+        if common:
+            top = common[0]
+            trigger_insights.append(
+                f"Your most-logged trigger this period is '{top[0]}' ({top[1]} time{'s' if top[1] != 1 else ''})."
+            )
+    if high_craving:
+        c_counts = Counter([c["trigger"] for c in high_craving])
+        top_c = c_counts.most_common(1)[0]
+        pct = round(top_c[1] / len(high_craving) * 100, 0)
+        trigger_insights.append(
+            f"'{top_c[0]}' appears in {int(pct)}% of your high-craving check-ins."
+        )
+
+    confidence = compute_confidence(entries)
+
+    return {
+        "observations": obs,
+        "insight_cards": cards,
+        "forecast": risk_forecast,
+        "recovery_score": recovery,
+        "trigger_insights": trigger_insights,
+        "confidence": confidence,
+    }
