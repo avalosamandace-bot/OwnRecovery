@@ -82,6 +82,19 @@ export default function Signup() {
             </RadioGroup>
           </div>
 
+          {role === "recovery_user" && (
+            <label className="flex items-start gap-3 rounded-lg border border-[#22D3EE]/25 bg-[#22D3EE]/5 p-4 cursor-pointer hover:bg-[#22D3EE]/10 transition-colors" data-testid="guided-toggle">
+              <Checkbox checked={guided} onCheckedChange={(v) => setGuided(!!v)} className="mt-0.5" />
+              <div>
+                <div className="flex items-center gap-2">
+                  <Heart className="w-4 h-4 text-[#22D3EE]" />
+                  <div className="text-sm font-medium text-white">I want help but don't know where to start</div>
+                </div>
+                <p className="text-xs text-slate-400 mt-1 leading-relaxed">A gentle four-question onboarding. We'll generate a supportive Day 1 plan — no clinical pressure.</p>
+              </div>
+            </label>
+          )}
+
           <div>
             <Label htmlFor="name" className="text-xs uppercase tracking-wider text-slate-400">Name</Label>
             <Input id="name" value={name} onChange={(e) => setName(e.target.value)} required data-testid="signup-name" className="mt-1 bg-white/5 border-white/10 text-white" />
@@ -127,19 +140,6 @@ export default function Signup() {
                 <span>Clinician verification in this demo is simulated. Real systems require credential verification.</span>
               </div>
             </div>
-          )}
-
-          {role === "recovery_user" && (
-            <label className="flex items-start gap-3 rounded-lg border border-white/10 bg-white/5 p-4 cursor-pointer hover:bg-white/10 transition-colors" data-testid="guided-toggle">
-              <Checkbox checked={guided} onCheckedChange={(v) => setGuided(!!v)} className="mt-0.5" />
-              <div>
-                <div className="flex items-center gap-2">
-                  <Heart className="w-4 h-4 text-[#22D3EE]" />
-                  <div className="text-sm font-medium text-white">I want help but don't know where to start</div>
-                </div>
-                <p className="text-xs text-slate-400 mt-1 leading-relaxed">A gentle four-question onboarding. We'll generate a supportive Day 1 plan — no clinical pressure.</p>
-              </div>
-            </label>
           )}
 
           <Button type="submit" disabled={loading} className="w-full bg-[#0F766E] hover:bg-[#115e59] text-white shadow-[0_0_24px_rgba(15,118,110,0.35)]" data-testid="signup-submit">
