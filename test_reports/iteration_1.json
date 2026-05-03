@@ -1,0 +1,41 @@
+{
+  "summary": "First end-to-end test of Own Recovery. Built backend_test.py covering 24 cases across auth/cookie, clinician-invite (positive+negative+single-use), check-in/risk/XAI compare, alerts, CSV export, weekly LLM summary, consent, supporter, clinician panel, onboarding, AI observations. Found and fixed 2 critical backend defects (UserCreate Pydantic model missing fields causing 500 on clinician signup; missing io/csv/StreamingResponse imports in routes_health causing 500 on CSV export). After fixes: 24/24 backend pytest passing. Frontend smoke covered landing, login (recovery + clinician), dashboard, trends, privacy, clinician panel, role guards, logout — all working. Verified badge visible for verified clinician; anonymized P-XXXXXX codes shown; risk distribution (1/3/2 across 9 patients) rendered.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/backend_test.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [
+    "Self-test by running: pytest /app/backend/tests/backend_test.py -v",
+    "Note: The seeded invite code CLINICIAN-DEMO-2026 has been CONSUMED during testing (single-use enforcement validated). CLINICIAN-RESEARCH-01 remains available. If main agent wants to demo clinician signup again, seed a new invite code or reset the used flag in DB."
+  ],
+  "critical_code_review_comments": [
+    "BUG (FIXED): /app/backend/models.py UserCreate was missing optional fields (clinician_invite_code, license_number, organization, onboarding_mode) that signup route accesses unconditionally — caused HTTP 500 (AttributeError) instead of 403/400 for clinician signup. Now added as Optional[str].",
+    "BUG (FIXED): /app/backend/routes_health.py was missing imports (io, csv, fastapi.responses.StreamingResponse) — /api/health/export/csv crashed with NameError. Now imported at module top.",
+    "MINOR: routes_auth.signup uses `payload.clinician_invite_code` even for non-clinician roles via attribute access; safer guard now possible because field defaults to None — verified by tests.",
+    "MINOR: /api/auth/invite/validate expects field name `invite_code` (not `code`) — review_request docs used `code` informally; the API contract is consistent and correct.",
+    "MINOR: /api/supporter/encourage payload uses `user_id` (recipient) — well-typed via EncouragementCreate; fine.",
+    "OBSERVATION: Consent default `share_craving=False` works — supporter view does not include 'craving' in entries (verified in tests).",
+    "OBSERVATION: HttpOnly cookie + Bearer token both work; logout clears cookie; /auth/me returns 401 without auth."
+  ],
+  "updated_files": [
+    "/app/backend/models.py",
+    "/app/backend/routes_health.py",
+    "/app/backend/tests/backend_test.py"
+  ],
+  "success_rate": {"backend": "100% (24/24)", "frontend": "100% on smoke flows"},
+  "test_credentials": "Used /app/memory/test_credentials.md verbatim (alex/sam/drquinn @demo.own / demo1234). Invite codes CLINICIAN-DEMO-2026 (now consumed) and CLINICIAN-RESEARCH-01 (still available).",
+  "seed_data_creation": "Did not re-seed. Created several TEST_ users via signup endpoint (cleanup not done; non-blocking for demo).",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Backend is solid after the two import/model fixes. The CLINICIAN-DEMO-2026 invite code was consumed by the single-use test; if you need to test clinician signup again, use CLINICIAN-RESEARCH-01 (still unused) OR insert a fresh invite into db.clinician_invites. All 24 pytest cases pass. Frontend dashboard for alex@demo.own renders all required panels (risk gauge, XAI 'Why this score', AI Observations with multiple observations, 30-day chart, alerts, navbar with Command/Check-in/Trends/Weekly/Privacy). Clinician panel shows Verified badge and anonymized patient list. Role guard properly redirects clinician away from /app. The frontend uses cookie-based auth (withCredentials).",
+  "rca of the issue": "Two regressions surfaced by the new clinician-invite + CSV-export features: (1) routes_auth.signup was extended to read clinician_invite_code and license_number from the payload but the UserCreate Pydantic schema was never updated — Pydantic v2 silently strips unknown fields so attribute access raised AttributeError → 500. Fix: declare them as Optional[str] = None on UserCreate. (2) The new /health/export/csv endpoint uses io.StringIO, csv.writer, and StreamingResponse but those modules/classes were never imported at the top of routes_health.py. Fix: add `import io`, `import csv`, and `from fastapi.responses import StreamingResponse`."
+}
